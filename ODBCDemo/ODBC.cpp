@@ -1,7 +1,4 @@
 #include "ODBC.h"
-#include <vector>
-
-
 ODBC::ODBC()
 {
 		//分配环境句柄
@@ -68,10 +65,11 @@ bool ODBC::Connnect()
 	return false;
 }
 
-int ODBC::ExecuteQuery(char * sql)
+int ODBC::ExecuteQuery(const string& sql) const
 {
 	//执行查询语句
-	retCode = SQLExecDirect(hStmt, reinterpret_cast<SQLCHAR*>(sql), SQL_NTS);
+	SQLExecDirect(hStmt, reinterpret_cast<SQLCHAR*>(const_cast<char *>(sql.c_str())), SQL_NTS);
+	//retCode = SQLExecDirect(hStmt, reinterpret_cast<SQLCHAR*>(sql), SQL_NTS);
 	if ((retCode != SQL_SUCCESS) && (retCode != SQL_SUCCESS_WITH_INFO))
 	{
 		throw InitException();
@@ -104,7 +102,6 @@ string ODBC::getString(string name)
 		}
 	}
 	SQLGetData(hStmt, index, SQL_C_CHAR, pszBuf, 50, &buflen);
-
 	if (buflen == -1)
 	{
 		return  string("null");
@@ -112,11 +109,7 @@ string ODBC::getString(string name)
 	return string(pszBuf);
 }
 
-int  ODBC::next() const
+bool  ODBC::next() const
 {
-	if (SQLFetch(hStmt)==SQL_NO_DATA)
-	{
-		return -1;
-	}
-	return 1;
+	return SQLFetch(hStmt) != SQL_NO_DATA;
 }

@@ -4,8 +4,9 @@ int main(int argc, char* argv[])
 {
 	ODBC test;
 	test.Connnect();
-	test.ExecuteQuery(const_cast<char*>("select *from C_jxy"));
-	while (test.next()>0)
+	// ReSharper disable once CppExpressionWithoutSideEffects
+	test.ExecuteQuery("select *from C_jxy");
+	while (test.next())
 	{
 		string Cno = test.getString("Cno");
 		string Cname = test.getString("Cname");

@@ -32,10 +32,10 @@ public:
 	int GetRowCount() { return rowCount; }
 	int GetColCount() { return colCount; }
 	
-	int ExecuteQuery(char * sql);
+	int ExecuteQuery(const string& sql) const;
 	string getString(string name);
 
-	int next() const;
+	bool next() const;
 
 
 };
