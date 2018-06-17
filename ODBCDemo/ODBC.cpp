@@ -1,13 +1,16 @@
 #include "ODBC.h"
+
 ODBC::ODBC()
 {
 		//分配环境句柄
 		retCode=SQLAllocHandle(SQL_HANDLE_ENV, nullptr, &hEnv);
+
 		if(retCode!=SQL_SUCCESS &&retCode!=SQL_SUCCESS_WITH_INFO)
 			throw InitException();
 
 		//指示函数调用格式为 ODBC 3.x
 		retCode = SQLSetEnvAttr(hEnv, SQL_ATTR_ODBC_VERSION, reinterpret_cast<SQLPOINTER>(SQL_OV_ODBC3), SQL_IS_INTEGER);
+
 		if (retCode != SQL_SUCCESS && retCode != SQL_SUCCESS_WITH_INFO)
 		{
 			SQLFreeHandle(SQL_HANDLE_DBC, hEnv);//失败则释放环境句柄
@@ -23,33 +26,27 @@ ODBC::ODBC()
 	
 }
 
-ODBC::ODBC(char * DNS, char * UserName, char * Password):ODBC()
+ODBC::ODBC(char * DSN, char * UserName, char * Password):ODBC()
 {
 
-	pszDSN = DNS;
-	pszUserName = UserName;
-	pszPassword = Password;
+	this->DSN = DSN;
+	this->UserName = UserName;
+	this->Password = Password;
 }
 
 
-ODBC::~ODBC()
-{
-	SQLDisconnect(hDbc);
-	SQLFreeHandle(SQL_HANDLE_DBC, hDbc);
-	SQLFreeHandle(SQL_HANDLE_ENV, hEnv);
-}
 
 bool ODBC::Connnect()
 {
 	//设置连接
 	reCode=SQLConnect(hDbc, 
-									reinterpret_cast<SQLCHAR*>(pszDSN), SQL_NTS,
-									reinterpret_cast<SQLCHAR*>(pszUserName), SQL_NTS, 
-									reinterpret_cast<SQLCHAR*>(pszPassword), SQL_NTS);
+									reinterpret_cast<SQLCHAR*>(DSN), SQL_NTS,
+									reinterpret_cast<SQLCHAR*>(UserName), SQL_NTS, 
+									reinterpret_cast<SQLCHAR*>(Password), SQL_NTS);
 	if ((reCode != SQL_SUCCESS) && (reCode != SQL_SUCCESS_WITH_INFO))
 	{
 		SQLFreeHandle(SQL_HANDLE_DBC, hDbc);
-		throw InitException();
+		throw InitException("Error Connect");
 	}
 	//分配 statement句柄
 	SQLAllocHandle(SQL_HANDLE_STMT, hDbc, &hStmt);
@@ -62,20 +59,19 @@ bool ODBC::Connnect()
 	}
 	
 
-	return false;
+	return true;
 }
 
-int ODBC::ExecuteQuery(const string& sql) const
+void ODBC::ExecuteQuery(const string& sql) const
 {
-	//执行查询语句
+	//执行语句
 	SQLExecDirect(hStmt, reinterpret_cast<SQLCHAR*>(const_cast<char *>(sql.c_str())), SQL_NTS);
-	//retCode = SQLExecDirect(hStmt, reinterpret_cast<SQLCHAR*>(sql), SQL_NTS);
 	if ((retCode != SQL_SUCCESS) && (retCode != SQL_SUCCESS_WITH_INFO))
 	{
 		throw InitException();
 	}
 
-	return 0;
+	
 }
 
 string ODBC::getString(string name)
@@ -112,4 +108,11 @@ string ODBC::getString(string name)
 bool  ODBC::next() const
 {
 	return SQLFetch(hStmt) != SQL_NO_DATA;
+}
+
+ODBC::~ODBC()
+{
+	SQLDisconnect(hDbc);
+	SQLFreeHandle(SQL_HANDLE_DBC, hDbc);
+	SQLFreeHandle(SQL_HANDLE_ENV, hEnv);
 }
